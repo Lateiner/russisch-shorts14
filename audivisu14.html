@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch-Quiz: Die Ohren vollsummen</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+
+        .progress {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .onoma-box {
+            background: #fff9c4;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            border: 2px dashed #fbc02d;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #ddd;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .option-btn:hover {
+            border-color: var(--primary);
+            background-color: #f8fbff;
+        }
+
+        .emoji-icon {
+            font-size: 1.8rem;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .next-btn {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .correct { border-color: var(--success); background-color: #e8f5e9; }
+        .wrong { border-color: var(--error); background-color: #ffebee; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="progress" id="progress">Situation 1 von 3</div>
+    <div class="onoma-box" id="soundEffect">🐝 бззз... жжжжжж!</div>
+    
+    <div class="question-text" id="question">
+        Was passiert hier gerade metaphorisch?
+    </div>
+
+    <div class="options-list" id="options">
+        <!-- Optionen werden per JS geladen -->
+    </div>
+
+    <div id="feedback"></div>
+    <button class="next-btn" id="nextBtn" onclick="nextLevel()">Nächste Situation ➡️</button>
+</div>
+
+<script>
+    const quizData = [
+        {
+            sound: "🐝 бззз... жжжжжж!",
+            question: "Das Verb <strong>жужжать</strong> bedeutet 'summen'. Was meint man, wenn jemand sagt: 'Er summt mir die Ohren voll'?",
+            options: [
+                { text: "Er singt mir ein Schlaflied vor.", emoji: "😴", correct: false },
+                { text: "Er redet ununterbrochen über ein Thema.", emoji: "🗣️", correct: true },
+                { text: "Er flüstert mir ein Geheimnis zu.", emoji: "🤫", correct: false }
+            ],
+            explanation: "Richtig! Wie eine Biene, die nicht aufhört zu summen, redet die Person ohne Pause."
+        },
+        {
+            sound: "👜 жжжж... сумка... жжжж!",
+            question: "Юля все уши мне прожужжала об этой сумке. Was ist Julias Ziel?",
+            options: [
+                { text: "Sie möchte, dass ich die Tasche für sie trage.", emoji: "🏋️", correct: false },
+                { text: "Sie hat die Tasche verloren und weint.", emoji: "😢", correct: false },
+                { text: "Sie will die Tasche unbedingt haben und redet nur noch davon.", emoji: "🛍️", correct: true }
+            ],
+            explanation: "Genau! Sie liegt jemandem mit ihrem Wunsch 'in den Ohren'."
+        },
+        {
+            sound: "👦 жжжж... парень... жжжж!",
+            question: "Она мне уже все уши прожужжала об этом парне. Wie fühlt sich die Zuhörerin wahrscheinlich?",
+            options: [
+                { text: "Sie ist genervt, weil sie das Thema schon zu oft gehört hat.", emoji: "🤯", correct: true },
+                { text: "Sie freut sich auf ein Date zu dritt.", emoji: "🥳", correct: false },
+                { text: "Sie hat den Namen des Jungen vergessen.", emoji: "🤔", correct: false }
+            ],
+            explanation: "Stimmt! Wenn einem die Ohren 'vollgesummt' wurden, ist man meistens erschöpft vom Zuhören."
+        }
+    ];
+
+    let currentLevel = 0;
+
+    function loadLevel() {
+        const data = quizData[currentLevel];
+        document.getElementById('progress').innerText = `Situation ${currentLevel + 1} von 3`;
+        document.getElementById('soundEffect').innerText = data.sound;
+        document.getElementById('question').innerHTML = data.question;
+        
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = '';
+        
+        data.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerHTML = `<span class="emoji-icon">${opt.emoji}</span> <span>${opt.text}</span>`;
+            btn.onclick = () => checkAnswer(btn, opt.correct);
+            optionsContainer.appendChild(btn);
+        });
+
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        const feedback = document.getElementById('feedback');
+        const allBtns = document.querySelectorAll('.option-btn');
+        
+        allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+        feedback.style.display = 'block';
+        if (isCorrect) {
+            btn.classList.add('correct');
+            feedback.innerHTML = "✅ " + quizData[currentLevel].explanation;
+            feedback.style.color = "#2e7d32";
+            document.getElementById('nextBtn').style.display = 'block';
+            if(currentLevel === quizData.length - 1) {
+                document.getElementById('nextBtn').innerText = "Quiz beendet! 🎉";
+            }
+        } else {
+            btn.classList.add('wrong');
+            feedback.innerHTML = "❌ Das stimmt nicht ganz. Versuch es noch einmal!";
+            feedback.style.color = "#c62828";
+            setTimeout(() => {
+                btn.classList.remove('wrong');
+                allBtns.forEach(b => b.style.pointerEvents = 'auto');
+                feedback.style.display = 'none';
+            }, 1500);
+        }
+    }
+
+    function nextLevel() {
+        if (currentLevel < quizData.length - 1) {
+            currentLevel++;
+            loadLevel();
+        } else {
+            alert("Gut gemacht! Du hast gelernt, was 'прожужжать все уши' bedeutet.");
+            currentLevel = 0;
+            loadLevel();
+        }
+    }
+
+    loadLevel();
+</script>
+
+</body>
+</html>
