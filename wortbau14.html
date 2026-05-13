@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wortbaustelle: Russisch Quiz</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f4f7f6;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header { margin-bottom: 20px; }
+        .progress { color: #888; font-size: 0.9rem; margin-bottom: 5px; }
+        h2 { margin: 0; color: #333; font-size: 1.3rem; min-height: 3rem; display: flex; align-items: center; justify-content: center; }
+
+        .dropzone {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            padding: 30px 15px;
+            background: #fdfdfd;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            min-height: 60px;
+            margin: 20px 0;
+        }
+
+        .word-tile {
+            background: #fff;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: grab;
+            font-size: 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            touch-action: none;
+        }
+
+        .word-tile:active { cursor: grabbing; background: var(--primary); color: white; }
+
+        .controls { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+
+        button {
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-check { background: var(--primary); color: white; }
+        .btn-check:hover { background: #357abd; }
+
+        .btn-reset { background: #ff9800; color: white; }
+        .btn-reset:hover { background: #f57c00; }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+            line-height: 1.4;
+        }
+
+        .status-success { background: #e8f5e9; color: #2e7d32; border: 1px solid var(--success); }
+        .status-error { background: #ffebee; color: #c62828; border: 1px solid var(--error); }
+        
+        .sortable-ghost { opacity: 0.3; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div class="header">
+        <div class="progress" id="lvl-text">Aufgabe 1 von 3</div>
+        <h2 id="instruction">Lade Quiz...</h2>
+    </div>
+
+    <div id="sortable-zone" class="dropzone"></div>
+
+    <div class="controls">
+        <button class="btn-check" onclick="verifyOrder()">Prüfen</button>
+        <button class="btn-reset" onclick="resetToBeginning()">Alles auf Anfang</button>
+    </div>
+
+    <div id="feedback"></div>
+</div>
+
+<script>
+    const levels = [
+        {
+            instruction: "Bilde die Grundform der Redewendung:",
+            words: ["прожужжать", "все", "уши"],
+            correct: ["прожужжать", "все", "уши"]
+        },
+        {
+            instruction: "Bilde den Satz über Julia und die Tasche:",
+            words: ["Юля", "прожужжала", "мне", "все", "уши"],
+            correct: ["Юля", "прожужжала", "мне", "все", "уши"]
+        },
+        {
+            instruction: "Bilde den Satz: 'Er hat mir die Ohren vollgesummt':",
+            words: ["Он", "прожужжал", "мне", "все", "уши"],
+            correct: ["Он", "прожужжал", "мне", "все", "уши"]
+        }
+    ];
+
+    let currentLvl = 0;
+    const zone = document.getElementById('sortable-zone');
+    const feedback = document.getElementById('feedback');
+
+    // Sortable initialisieren
+    new Sortable(zone, { animation: 200, ghostClass: 'sortable-ghost' });
+
+    function initLevel() {
+        const data = levels[currentLvl];
+        document.getElementById('lvl-text').innerText = `Aufgabe ${currentLvl + 1} von ${levels.length}`;
+        document.getElementById('instruction').innerText = data.instruction;
+        feedback.style.display = 'none';
+        
+        // Wörter mischen (solange bis sie NICHT der Lösung entsprechen)
+        let shuffled;
+        do {
+            shuffled = [...data.words].sort(() => Math.random() - 0.5);
+        } while (JSON.stringify(shuffled) === JSON.stringify(data.correct));
+        
+        zone.innerHTML = '';
+        shuffled.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'word-tile';
+            div.setAttribute('data-word', w);
+            div.innerText = w;
+            zone.appendChild(div);
+        });
+    }
+
+    // Die gewünschte Funktion: Zurück zu Satz 1
+    function resetToBeginning() {
+        currentLvl = 0;
+        initLevel();
+    }
+
+    function verifyOrder() {
+        const currentOrder = Array.from(zone.children).map(t => t.getAttribute('data-word'));
+        const correctOrder = levels[currentLvl].correct;
+
+        feedback.style.display = 'block';
+
+        if (JSON.stringify(currentOrder) === JSON.stringify(correctOrder)) {
+            feedback.className = 'status-success';
+            feedback.onclick = null; // Klick-Event sicherheitshalber leeren
+            
+            if (currentLvl < levels.length - 1) {
+                feedback.innerHTML = "<strong>Richtig! 🎉</strong><br>Klicke hier für das nächste Level.";
+                feedback.style.cursor = "pointer";
+                feedback.onclick = () => {
+                    currentLvl++;
+                    initLevel();
+                    feedback.onclick = null;
+                };
+            } else {
+                feedback.innerHTML = "<strong>Super! 🏆</strong> Du hast alle Sätze korrekt gebaut. Nutze 'Alles auf Anfang', um noch einmal zu üben.";
+                feedback.style.cursor = "default";
+            }
+        } else {
+            feedback.className = 'status-error';
+            feedback.innerHTML = "<strong>Noch nicht ganz...</strong> Die Reihenfolge stimmt nicht. Schieb die Wörter an die richtige Stelle!";
+            feedback.onclick = null;
+            feedback.style.cursor = "default";
+        }
+    }
+
+    // Erster Start beim Laden der Seite
+    initLevel();
+</script>
+
+</body>
+</html>
