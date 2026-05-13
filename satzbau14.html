@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grammatik-Training: Dativ-Formen</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f8f9fc;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .sentence-display {
+            background: #f1f4f8;
+            padding: 25px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--primary);
+            line-height: 1.6;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .gap {
+            display: inline-block;
+            min-width: 60px;
+            border-bottom: 2px dashed var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+            padding: 0 5px;
+        }
+
+        .options-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .option-tile {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-tile:hover {
+            border-color: var(--primary);
+            background-color: #f0f7ff;
+        }
+
+        .option-tile.correct { background-color: #e8f5e9; border-color: var(--success); color: #2e7d32; }
+        .option-tile.wrong { background-color: #ffebee; border-color: var(--error); color: #c62828; }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-weight: 500;
+        }
+
+        .btn-next {
+            margin-top: 20px;
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+            width: 100%;
+        }
+
+        .btn-restart {
+            margin-top: 10px;
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: 1px solid #ccc;
+            background: white;
+            color: #666;
+            cursor: pointer;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <div class="progress-text" id="progress">Satz 1 von 5</div>
+    <h2 style="margin-top: 0;">Dativ-Training</h2>
+    <p style="color: #666; margin-bottom: 20px;">Wähle die richtige Form, um die Lücke zu füllen:</p>
+
+    <div class="sentence-display">
+        <div id="sentence-ru">Lade Satz...</div>
+        <small id="sentence-de" style="color: #666; margin-top: 8px; font-size: 0.9rem;"></small>
+    </div>
+
+    <div class="options-container" id="options">
+        <!-- Buttons werden dynamisch erzeugt -->
+    </div>
+
+    <div id="feedback"></div>
+    <button class="btn-next" id="nextBtn" onclick="nextQuestion()">Weiter ➔</button>
+    <button class="btn-restart" onclick="resetQuiz()">Alles auf Anfang ↺</button>
+</div>
+
+<script>
+    const questions = [
+        {
+            ru: "Юля прожужжала <span class='gap'>...</span> alle Ohren wegen der Tasche.",
+            target: "mir",
+            de: "Julia hat mir die Ohren vollgesummt...",
+            options: [
+                { text: "меня", correct: false },
+                { text: "мне", correct: true },
+                { text: "мной", correct: false }
+            ],
+            expl: "Richtig! 'мне' ist Dativ (Wem?)."
+        },
+        {
+            ru: "Я прожужжал <span class='gap'>...</span> alle Ohren wegen des Urlaubs.",
+            target: "ihr",
+            de: "Ich habe ihr die Ohren vollgesummt...",
+            options: [
+                { text: "её", correct: false },
+                { text: "ей", correct: true },
+                { text: "ней", correct: false }
+            ],
+            expl: "Korrekt! 'ей' ist die Dativ-Form von 'sie' (она)."
+        },
+        {
+            ru: "Мы прожужжали <span class='gap'>...</span> alle Ohren wegen des Projekts.",
+            target: "ihm",
+            de: "Wir haben ihm die Ohren vollgesummt...",
+            options: [
+                { text: "его", correct: false },
+                { text: "ему", correct: true },
+                { text: "ним", correct: false }
+            ],
+            expl: "Sehr gut! 'ему' ist Dativ für 'er' (он)."
+        },
+        {
+            ru: "Друг прожужжал <span class='gap'>...</span> alle Ohren wegen des Autos.",
+            target: "uns",
+            de: "Der Freund hat uns die Ohren vollgesummt...",
+            options: [
+                { text: "нас", correct: false },
+                { text: "нами", correct: false },
+                { text: "нам", correct: true }
+            ],
+            expl: "Richtig! 'нам' ist Dativ für 'wir' (мы)."
+        },
+        {
+            ru: "Она прожужжала <span class='gap'>...</span> alle Ohren wegen des Jungen.",
+            target: "ihnen",
+            de: "Sie hat ihnen die Ohren vollgesummt...",
+            options: [
+                { text: "их", correct: false },
+                { text: "ими", correct: false },
+                { text: "им", correct: true }
+            ],
+            expl: "Hervorragend! 'им' ist Dativ für 'sie' (Plural, они)."
+        }
+    ];
+
+    let currentIdx = 0;
+
+    function loadQuestion() {
+        const q = questions[currentIdx];
+        document.getElementById('progress').innerText = `Satz ${currentIdx + 1} von ${questions.length}`;
+        document.getElementById('sentence-ru').innerHTML = q.ru;
+        document.getElementById('sentence-de').innerText = q.de;
+        
+        const optionsContainer = document.getElementById('options');
+        optionsContainer.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('div');
+            btn.className = 'option-tile';
+            btn.innerText = opt.text;
+            btn.onclick = () => checkAnswer(btn, opt.correct);
+            optionsContainer.appendChild(btn);
+        });
+
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('nextBtn').style.display = 'none';
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        const feedback = document.getElementById('feedback');
+        const tiles = document.querySelectorAll('.option-tile');
+        
+        if (isCorrect) {
+            btn.classList.add('correct');
+            tiles.forEach(t => t.style.pointerEvents = 'none');
+            feedback.style.display = 'block';
+            feedback.style.backgroundColor = '#e8f5e9';
+            feedback.style.color = '#2e7d32';
+            feedback.innerHTML = `<strong>Richtig!</strong> ${questions[currentIdx].expl}`;
+            document.getElementById('nextBtn').style.display = 'block';
+            
+            // Lücke füllen
+            document.querySelector('.gap').innerText = btn.innerText;
+        } else {
+            btn.classList.add('wrong');
+            feedback.style.display = 'block';
+            feedback.style.backgroundColor = '#ffebee';
+            feedback.style.color = '#c62828';
+            feedback.innerText = "Nicht ganz. Überlege: Welches Wort steht im Dativ?";
+            setTimeout(() => {
+                btn.classList.remove('wrong');
+                feedback.style.display = 'none';
+            }, 1500);
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < questions.length) {
+            loadQuestion();
+        } else {
+            document.querySelector('.quiz-card').innerHTML = `
+                <h2>🏆 Training beendet!</h2>
+                <p>Du hast alle Dativ-Formen für diese Redewendung gemeistert.</p>
+                <button class="btn-next" style="display:block" onclick="location.reload()">Nochmal spielen</button>
+            `;
+        }
+    }
+
+    function resetQuiz() {
+        currentIdx = 0;
+        loadQuestion();
+    }
+
+    loadQuestion();
+</script>
+
+</body>
+</html>
