@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etymologie-Check: Woher kommt das Wort?</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #fdfdfd;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 550px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 { color: #333; margin-bottom: 10px; font-size: 1.4rem; }
+        p { color: #666; margin-bottom: 25px; }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+
+        /* Das russische Wort */
+        .word-box {
+            background: #fff;
+            border: 3px solid var(--primary);
+            color: var(--primary);
+            padding: 20px 40px;
+            border-radius: 15px;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .word-box.selected {
+            background: var(--primary);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        /* Die Bild-Optionen (Emojis) */
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            width: 100%;
+        }
+
+        .emoji-card {
+            background: #f8f9fa;
+            border: 2px solid #eee;
+            border-radius: 15px;
+            padding: 20px;
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .emoji-card span { font-size: 0.9rem; color: #888; font-weight: normal; }
+
+        .emoji-card:hover { border-color: var(--primary); background: #f0f7ff; }
+
+        .emoji-card.correct { border-color: var(--success); background: #e8f5e9; }
+        .emoji-card.wrong { border-color: var(--error); background: #ffebee; }
+
+        #feedback {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .btn-restart {
+            margin-top: 20px;
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: none;
+            background: #636e72;
+            color: white;
+            cursor: pointer;
+            display: none;
+        }
+
+        @media (max-width: 400px) {
+            .emoji-grid { grid-template-columns: 1fr; }
+            .word-box { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <h2>🐝 Wort-Ursprung</h2>
+    <p>Klicke zuerst auf das russische Verb und dann auf das Bild, das die ursprüngliche Bedeutung zeigt!</p>
+
+    <div class="game-area">
+        <div class="word-box" id="targetWord" onclick="selectWord()">жужжать</div>
+
+        <div class="emoji-grid">
+            <div class="emoji-card" onclick="checkMatch(this, false)">🚗 <span>Auto</span></div>
+            <div class="emoji-card" id="correctEmoji" onclick="checkMatch(this, true)">🐝 <span>Biene</span></div>
+            <div class="emoji-card" onclick="checkMatch(this, false)">😴 <span>Kind</span></div>
+            <div class="emoji-card" onclick="checkMatch(this, false)">🎺 <span>Trompete</span></div>
+        </div>
+    </div>
+
+    <div id="feedback"></div>
+    <button class="btn-restart" id="restartBtn" onclick="resetGame()">Alles auf Anfang ↺</button>
+</div>
+
+<script>
+    let wordSelected = false;
+
+    function selectWord() {
+        wordSelected = true;
+        document.getElementById('targetWord').classList.add('selected');
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+        feedback.style.background = '#e3f2fd';
+        feedback.style.color = '#1976d2';
+        feedback.innerText = "Wort ausgewählt! Wähle nun das passende Bild.";
+    }
+
+    function checkMatch(element, isCorrect) {
+        if (!wordSelected) {
+            alert("Klicke bitte zuerst auf das Wort 'жужжать'!");
+            return;
+        }
+
+        const feedback = document.getElementById('feedback');
+        
+        if (isCorrect) {
+            element.classList.add('correct');
+            feedback.style.display = 'block';
+            feedback.style.background = '#e8f5e9';
+            feedback.style.color = '#2e7d32';
+            feedback.innerHTML = "🎯 Richtig! <strong>жужжать</strong> bedeutet 'summen' wie eine Biene. Das ist die Basis für unsere Redewendung.";
+            document.getElementById('restartBtn').style.display = 'inline-block';
+            disableAll();
+        } else {
+            element.classList.add('wrong');
+            feedback.style.display = 'block';
+            feedback.style.background = '#ffebee';
+            feedback.style.color = '#c62828';
+            feedback.innerText = "Leider nicht. Dieses Bild macht kein Summ-Geräusch!";
+            
+            setTimeout(() => {
+                element.classList.remove('wrong');
+            }, 1000);
+        }
+    }
+
+    function disableAll() {
+        const cards = document.querySelectorAll('.emoji-card');
+        cards.forEach(c => c.style.pointerEvents = 'none');
+        document.getElementById('targetWord').style.pointerEvents = 'none';
+    }
+
+    function resetGame() {
+        wordSelected = false;
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'none';
+        document.getElementById('restartBtn').style.display = 'none';
+        document.getElementById('targetWord').classList.remove('selected');
+        document.getElementById('targetWord').style.pointerEvents = 'auto';
+        
+        const cards = document.querySelectorAll('.emoji-card');
+        cards.forEach(c => {
+            c.classList.remove('correct', 'wrong');
+            c.style.pointerEvents = 'auto';
+        });
+    }
+</script>
+
+</body>
+</html>
