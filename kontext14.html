@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Russisch Quiz: Kontext-Analyse</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f8f9fa;
+            --text: #2d3436;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+            color: var(--text);
+        }
+
+        .quiz-container {
+            width: 100%;
+            max-width: 650px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 33%;
+            transition: width 0.4s ease;
+        }
+
+        .dialog-box {
+            background: #f1f7ff;
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            margin-bottom: 25px;
+            font-style: italic;
+            border-radius: 0 10px 10px 0;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--primary);
+            background-color: #f8fbff;
+            transform: translateY(-2px);
+        }
+
+        .option-btn.correct {
+            background-color: #e8f5e9;
+            border-color: var(--success);
+            color: #2e7d32;
+        }
+
+        .option-btn.wrong {
+            background-color: #ffebee;
+            border-color: var(--error);
+            color: #c62828;
+        }
+
+        #feedback {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .btn-action {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            border-radius: 50px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .btn-reset {
+            background: #636e72;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div class="header">
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        <small id="lvl-status">Situation 1 von 3</small>
+        <h2 id="question-title">Wann passt der Ausdruck?</h2>
+    </div>
+
+    <div class="dialog-box" id="scenario-text">
+        Lade Situation...
+    </div>
+
+    <div class="options-grid" id="options-container">
+        <!-- Buttons werden hier generiert -->
+    </div>
+
+    <div id="feedback"></div>
+    <button class="btn-action" id="next-btn" onclick="nextQuestion()">Nächste Situation ➔</button>
+    <button class="btn-action btn-reset" id="reset-btn" onclick="resetQuiz()">Alles auf Anfang ↺</button>
+</div>
+
+<script>
+    const quizData = [
+        {
+            scenario: "Max hat sich ein neues Auto gekauft. Seit Montag redet er beim Frühstück, in der Pause und am Abend nur noch über PS, Reifen und Motoren. Seine Freunde können es nicht mehr hören.",
+            options: [
+                { text: "Der Ausdruck passt perfekt.", correct: true },
+                { text: "Der Ausdruck passt nicht, weil Max glücklich ist.", correct: false },
+                { text: "Der Ausdruck passt nicht, Autos summen nicht.", correct: false }
+            ],
+            explanation: "Richtig! Max redet so viel darüber, dass es für die anderen wie ein lästiges Summen in den Ohren ist."
+        },
+        {
+            scenario: "Anna kommt aus dem Urlaub zurück. Als sie ihre Kollegin trifft, sagt sie kurz: 'Es war schön, das Wetter war toll.' Danach fängt sie an zu arbeiten.",
+            options: [
+                { text: "Anna hat ihrer Kollegin die Ohren vollgesummt.", correct: false },
+                { text: "Nein, das war eine kurze Information ohne Wiederholung.", correct: true },
+                { text: "Ja, weil Urlaub ein wichtiges Thema ist.", correct: false }
+            ],
+            explanation: "Genau. Um 'прожужжать все уши' zu verwenden, muss die Person lange und beharrlich reden."
+        },
+        {
+            scenario: "Ein Junge lehnt sich zu seinem Freund und flüstert ihm ganz leise einen geheimen Code für ein Computerspiel zu.",
+            options: [
+                { text: "Das ist 'прожужжать все уши'.", correct: false },
+                { text: "Nein, Flüstern und Geheimnisse passen nicht zu diesem Ausdruck.", correct: true }
+            ],
+            explanation: "Stimmt! Der Ausdruck impliziert eine gewisse Intensität und Dauerhaftigkeit, kein kurzes Flüstern."
+        }
+    ];
+
+    let currentIdx = 0;
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        document.getElementById('scenario-text').innerText = data.scenario;
+        document.getElementById('lvl-status').innerText = `Situation ${currentIdx + 1} von ${quizData.length}`;
+        document.getElementById('progress-fill').style.width = `${((currentIdx + 1) / quizData.length) * 100}%`;
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        
+        data.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => selectOption(btn, opt.correct);
+            container.appendChild(btn);
+        });
+
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+        document.getElementById('reset-btn').style.display = 'none';
+    }
+
+    function selectOption(btn, isCorrect) {
+        const allBtns = document.querySelectorAll('.option-btn');
+        allBtns.forEach(b => b.disabled = true);
+
+        const feedback = document.getElementById('feedback');
+        feedback.style.display = 'block';
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            feedback.innerHTML = "✅ " + quizData[currentIdx].explanation;
+            feedback.style.color = "#2e7d32";
+            
+            if (currentIdx < quizData.length - 1) {
+                document.getElementById('next-btn').style.display = 'block';
+            } else {
+                document.getElementById('reset-btn').style.display = 'block';
+                feedback.innerHTML += "<br><br><strong>Glückwunsch! Du hast den Kontext gemeistert.</strong>";
+            }
+        } else {
+            btn.classList.add('wrong');
+            feedback.innerHTML = "❌ Das stimmt nicht. Überleg noch einmal, was das 'Summen' (жужжать) bedeutet.";
+            feedback.style.color = "#c62828";
+            
+            setTimeout(() => {
+                allBtns.forEach(b => {
+                    b.disabled = false;
+                    b.classList.remove('wrong');
+                });
+                feedback.style.display = 'none';
+            }, 2000);
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        loadQuestion();
+    }
+
+    function resetQuiz() {
+        currentIdx = 0;
+        loadQuestion();
+    }
+
+    // Initialer Start
+    loadQuestion();
+</script>
+
+</body>
+</html>
