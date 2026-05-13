@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hörverstehen: Die Wort-Detektive</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --success: #00b894;
+            --error: #d63031;
+            --bg: #f0f3f7;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 550px;
+            background: white;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 20%;
+            transition: width 0.4s ease;
+        }
+
+        .audio-box {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid #eef0f7;
+            margin-bottom: 25px;
+        }
+
+        .play-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 10px rgba(108, 92, 231, 0.3);
+        }
+
+        .play-btn:hover { background: #5b4cc4; }
+        .play-btn:active { transform: scale(0.9); }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            background: white;
+            border: 2px solid #e0e6ed;
+            padding: 16px;
+            border-radius: 15px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 1rem;
+            transition: all 0.2s;
+            line-height: 1.4;
+        }
+
+        .option-btn:hover:not(:disabled) { border-color: var(--primary); background: #fcfcff; }
+
+        .option-btn.correct { background-color: #e6faf5; border-color: var(--success); color: #00896d; }
+        .option-btn.wrong { background-color: #fff5f5; border-color: var(--error); color: #b92525; }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .next-btn {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+
+        .restart-btn {
+            margin-top: 15px;
+            padding: 10px 20px;
+            background: #636e72;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card" id="main-card">
+    <div class="progress-bar"><div id="progress-fill"></div></div>
+    <p id="step-text" style="color: #888; font-size: 0.9rem;">Aufgabe 1 von 5</p>
+    <h2 style="margin: 10px 0 20px 0;">Was hast du verstanden?</h2>
+
+    <div class="audio-box">
+        <button class="play-btn" onclick="speakText()">▶</button>
+        <p style="margin-top: 10px; font-size: 0.85rem; color: #6c5ce7;">Anhören (Russisch)</p>
+    </div>
+
+    <div class="options-list" id="options"></div>
+    <div id="feedback"></div>
+    <button class="next-btn" id="next-btn" onclick="nextQuestion()">Nächste Aufgabe ➔</button>
+</div>
+
+<script>
+    const quizData = [
+        {
+            audio: "Юля прожужжала мне все уши об этой сумке",
+            options: [
+                { text: "Julia will die Tasche nicht mehr kaufen.", correct: false },
+                { text: "Julia redet ununterbrochen über die Tasche.", correct: true },
+                { text: "Julia hat die Tasche im Laden vergessen.", correct: false }
+            ],
+            tip: "Richtig! Das Summen steht für das ständige Reden."
+        },
+        {
+            audio: "Она уже все уши прожужжала об этом парне",
+            options: [
+                { text: "Sie redet ständig über diesen Typen.", correct: true },
+                { text: "Der Typ redet ständig über sie.", correct: false },
+                { text: "Sie hat dem Typen etwas ins Ohr geflüstert.", correct: false }
+            ],
+            tip: "Genau! Das Objekt (der Typ) ist der Grund für das Dauerreden."
+        },
+        {
+            audio: "Друг прожужжал мне все уши о своей новой машине",
+            options: [
+                { text: "Das Auto macht laute Brummgeräusche.", correct: false },
+                { text: "Der Freund ist genervt von seinem Auto.", correct: false },
+                { text: "Der Freund schwärmt pausenlos von seinem Auto.", correct: true }
+            ],
+            tip: "Korrekt! Wer von etwas begeistert ist, 'summt' anderen oft die Ohren voll."
+        },
+        {
+            audio: "Я прожужжал всем уши о своём отпуске",
+            options: [
+                { text: "Ich habe allen von meinem Urlaub erzählt, bis sie genervt waren.", correct: true },
+                { text: "Ich habe meinen Urlaub wegen des Lärms abgebrochen.", correct: false },
+                { text: "Niemand wollte etwas über meinen Urlaub hören.", correct: false }
+            ],
+            tip: "Sehr gut! Hier bist du selbst derjenige, der 'summt'."
+        },
+        {
+            audio: "Хватит прожужжать мне уши!",
+            options: [
+                { text: "Erzähl mir bitte mehr!", correct: false },
+                { text: "Hör auf, mich damit vollzuquatschen!", correct: true },
+                { text: "Ich höre dir gar nicht zu.", correct: false }
+            ],
+            tip: "Perfekt! 'Хватит' bedeutet 'Genug/Hör auf'."
+        }
+    ];
+
+    let currentIdx = 0;
+
+    function speakText() {
+        const msg = new SpeechSynthesisUtterance();
+        msg.text = quizData[currentIdx].audio;
+        msg.lang = 'ru-RU';
+        msg.rate = 0.85;
+        window.speechSynthesis.speak(msg);
+    }
+
+    function loadQuestion() {
+        const q = quizData[currentIdx];
+        document.getElementById('progress-fill').style.width = `${((currentIdx + 1) / quizData.length) * 100}%`;
+        document.getElementById('step-text').innerText = `Aufgabe ${currentIdx + 1} von ${quizData.length}`;
+        
+        const container = document.getElementById('options');
+        container.innerHTML = '';
+        
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => checkAnswer(btn, opt.correct);
+            container.appendChild(btn);
+        });
+
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(btn, isCorrect) {
+        const allBtns = document.querySelectorAll('.option-btn');
+        const feedback = document.getElementById('feedback');
+        
+        allBtns.forEach(b => b.disabled = true);
+        feedback.style.display = 'block';
+
+        if (isCorrect) {
+            btn.classList.add('correct');
+            feedback.innerHTML = "✅ " + quizData[currentIdx].tip;
+            feedback.style.color = "#00896d";
+            document.getElementById('next-btn').style.display = 'block';
+        } else {
+            btn.classList.add('wrong');
+            feedback.innerHTML = "❌ Das war nicht ganz richtig. Hör noch mal genau hin.";
+            feedback.style.color = "#d63031";
+            setTimeout(() => {
+                btn.classList.remove('wrong');
+                allBtns.forEach(b => b.disabled = false);
+                feedback.style.display = 'none';
+            }, 2000);
+        }
+    }
+
+    function nextQuestion() {
+        currentIdx++;
+        if (currentIdx < quizData.length) {
+            loadQuestion();
+        } else {
+            showFinal();
+        }
+    }
+
+    function showFinal() {
+        document.getElementById('main-card').innerHTML = `
+            <h2 style="font-size: 2.5rem;">🏆</h2>
+            <h2>Hörverstehen gemeistert!</h2>
+            <p>Du erkennst die Bedeutung der Redewendung nun in jedem Kontext.</p>
+            <button class="next-btn" style="display:block" onclick="resetQuiz()">Neustart ↺</button>
+        `;
+    }
+
+    function resetQuiz() {
+        location.reload();
+    }
+
+    // Erster Start
+    loadQuestion();
+</script>
+
+</body>
+</html>
