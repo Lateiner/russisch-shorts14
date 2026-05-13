@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory: Wortschatz-Transfer</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        h2 { color: #333; text-align: center; margin-bottom: 10px; }
+        .desc { color: #666; margin-bottom: 20px; text-align: center; max-width: 500px; }
+
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 12px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .card {
+            background: white;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            user-select: none;
+        }
+
+        .card.selected {
+            border-color: var(--primary);
+            background-color: #e3f2fd;
+        }
+
+        .card.matched {
+            background-color: #e8f5e9;
+            border-color: var(--success);
+            color: var(--success);
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.9);
+        }
+
+        .controls {
+            margin-top: 30px;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .btn-restart {
+            padding: 12px 30px;
+            background: #636e72;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        @media (max-width: 480px) {
+            .memory-grid { grid-template-columns: repeat(2, 1fr); }
+            .card { height: 80px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Memory: Wortschatz-Transfer</h2>
+    <p class="desc">Finde die zusammengehörigen Paare zwischen Russisch und Deutsch!</p>
+
+    <div class="memory-grid" id="grid"></div>
+
+    <div class="controls">
+        <button class="btn-restart" onclick="initGame()">Neustart ↺</button>
+    </div>
+
+<script>
+    const pairs = [
+        { ru: "прожужжать все уши", de: "die Ohren vollquatschen" },
+        { ru: "об этой сумке", de: "wegen dieser Tasche" },
+        { ru: "об этом парне", de: "wegen dieses Typen" },
+        { ru: "мне", de: "mir (Dativ)" },
+        { ru: "ей", de: "ihr (Dativ)" },
+        { ru: "нам", de: "uns (Dativ)" }
+    ];
+
+    let cards = [];
+    let firstCard = null;
+    let secondCard = null;
+    let lockBoard = false;
+
+    function initGame() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        firstCard = null;
+        secondCard = null;
+        lockBoard = false;
+
+        // Erstelle Karten-Array aus Paaren
+        let gameItems = [];
+        pairs.forEach((pair, index) => {
+            gameItems.push({ text: pair.ru, matchId: index, lang: 'ru' });
+            gameItems.push({ text: pair.de, matchId: index, lang: 'de' });
+        });
+
+        // Mischen
+        gameItems.sort(() => Math.random() - 0.5);
+
+        // DOM Elemente erstellen
+        gameItems.forEach(item => {
+            const cardEl = document.createElement('div');
+            cardEl.classList.add('card');
+            cardEl.innerText = item.text;
+            cardEl.dataset.matchId = item.matchId;
+            cardEl.onclick = () => selectCard(cardEl);
+            grid.appendChild(cardEl);
+        });
+    }
+
+    function selectCard(card) {
+        if (lockBoard || card === firstCard || card.classList.contains('matched')) return;
+
+        card.classList.add('selected');
+
+        if (!firstCard) {
+            firstCard = card;
+            return;
+        }
+
+        secondCard = card;
+        checkMatch();
+    }
+
+    function checkMatch() {
+        let isMatch = firstCard.dataset.matchId === secondCard.dataset.matchId;
+
+        if (isMatch) {
+            disableCards();
+        } else {
+            unselectCards();
+        }
+    }
+
+    function disableCards() {
+        lockBoard = true;
+        firstCard.classList.add('matched');
+        secondCard.classList.add('matched');
+
+        setTimeout(() => {
+            resetBoard();
+        }, 600); // Zeit zum "Verschwinden"
+    }
+
+    function unselectCards() {
+        lockBoard = true;
+        setTimeout(() => {
+            firstCard.classList.remove('selected');
+            secondCard.classList.remove('selected');
+            resetBoard();
+        }, 1000);
+    }
+
+    function resetBoard() {
+        [firstCard, secondCard] = [null, null];
+        lockBoard = false;
+
+        // Prüfen ob alle weg sind
+        if (document.querySelectorAll('.card:not(.matched)').length === 0) {
+            setTimeout(() => alert("Super! Alle Paare gefunden."), 500);
+        }
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>
