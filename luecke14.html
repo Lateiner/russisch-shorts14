@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Präpositionen-Check: о vs. об</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f4f7f9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        }
+
+        h2 { text-align: center; color: #333; margin-top: 0; font-size: 1.4rem; }
+        .instruction { text-align: center; color: #666; margin-bottom: 25px; font-size: 0.95rem; }
+
+        .sentence-list { display: grid; gap: 20px; }
+
+        .sentence-item {
+            background: #fff;
+            border: 1px solid #e0e6ed;
+            padding: 15px;
+            border-radius: 12px;
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        .de-sub {
+            display: block;
+            font-size: 0.85rem;
+            color: #888;
+            line-height: 1.2;
+            margin-top: 5px;
+        }
+
+        select {
+            padding: 5px 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            color: var(--primary);
+            outline: none;
+        }
+
+        select.correct { border-color: var(--success); color: var(--success); background: #f0fdf4; }
+        select.wrong { border-color: var(--error); color: var(--error); background: #fef2f2; }
+
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 15px;
+            border-radius: 50px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-check { background: var(--primary); color: white; }
+        .btn-restart { background: #636e72; color: white; display: none; }
+        .btn:active { opacity: 0.8; }
+
+        #final-feedback {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .sentence-item { font-size: 1rem; }
+            h2 { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card">
+    <h2>Präpositionen-Check</h2>
+    <p class="instruction">Wähle <b>о</b> oder <b>об</b> aus. <br><small>(Tipp: "об" steht meist vor Vokalen)</small></p>
+
+    <div class="sentence-list">
+        <!-- Satz 1 -->
+        <div class="sentence-item">
+            Юля прожужжала мне все уши 
+            <select class="quiz-select" data-answer="об">
+                <option value="">?</option>
+                <option value="о">о</option>
+                <option value="об">об</option>
+            </select> 
+            этой сумке.
+            <span class="de-sub">... wegen dieser Tasche.</span>
+        </div>
+
+        <!-- Satz 2 -->
+        <div class="sentence-item">
+            Она прожужжала подруге уши 
+            <select class="quiz-select" data-answer="об">
+                <option value="">?</option>
+                <option value="о">о</option>
+                <option value="об">об</option>
+            </select> 
+            этом парне.
+            <span class="de-sub">... wegen dieses Typen.</span>
+        </div>
+
+        <!-- Satz 3 -->
+        <div class="sentence-item">
+            Друг прожужжал мне уши 
+            <select class="quiz-select" data-answer="о">
+                <option value="">?</option>
+                <option value="о">о</option>
+                <option value="об">об</option>
+            </select> 
+            новой машине.
+            <span class="de-sub">... wegen des neuen Autos.</span>
+        </div>
+
+        <!-- Satz 4 -->
+        <div class="sentence-item">
+            Я прожужжал всем уши 
+            <select class="quiz-select" data-answer="о">
+                <option value="">?</option>
+                <option value="о">о</option>
+                <option value="об">об</option>
+            </select> 
+            своём отпуске.
+            <span class="de-sub">... wegen meines Urlaubs.</span>
+        </div>
+
+        <!-- Satz 5 -->
+        <div class="sentence-item">
+            Мы прожужжали ему уши 
+            <select class="quiz-select" data-answer="об">
+                <option value="">?</option>
+                <option value="о">о</option>
+                <option value="об">об</option>
+            </select> 
+            учёбе.
+            <span class="de-sub">... wegen des Studiums.</span>
+        </div>
+    </div>
+
+    <div id="final-feedback"></div>
+
+    <div class="controls">
+        <button class="btn btn-check" onclick="checkAnswers()">Antworten prüfen</button>
+        <button class="btn btn-restart" id="restart-btn" onclick="location.reload()">Neustart ↺</button>
+    </div>
+</div>
+
+<script>
+    function checkAnswers() {
+        const selects = document.querySelectorAll('.quiz-select');
+        let correctCount = 0;
+        let allSelected = true;
+
+        selects.forEach(select => {
+            if (select.value === "") {
+                allSelected = false;
+                return;
+            }
+
+            if (select.value === select.dataset.answer) {
+                select.className = "quiz-select correct";
+                correctCount++;
+            } else {
+                select.className = "quiz-select wrong";
+            }
+        });
+
+        if (!allSelected) {
+            alert("Bitte fülle alle Lücken aus!");
+            return;
+        }
+
+        const feedback = document.getElementById('final-feedback');
+        feedback.style.display = "block";
+
+        if (correctCount === selects.length) {
+            feedback.style.background = "#e8f5e9";
+            feedback.style.color = "#2e7d32";
+            feedback.innerHTML = "✨ Perfekt! Du hast die Regel verstanden: 'об' vor Vokalen (э, у), 'о' vor Konsonanten.";
+            document.getElementById('restart-btn').style.display = "block";
+        } else {
+            feedback.style.background = "#fff4f2";
+            feedback.style.color = "#c62828";
+            feedback.innerHTML = `Noch nicht ganz: ${correctCount} von ${selects.length} richtig. Probier es nochmal!`;
+        }
+    }
+</script>
+
+</body>
+</html>
