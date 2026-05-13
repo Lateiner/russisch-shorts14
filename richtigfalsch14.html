@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Idiom-Check: Richtig oder Falsch?</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f8f9fc;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 500px;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .phrase-box {
+            background: #fff;
+            border: 3px solid #eee;
+            padding: 40px 20px;
+            border-radius: 15px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            margin-bottom: 30px;
+            color: #2d3436;
+            transition: all 0.3s ease;
+        }
+
+        .choice-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 18px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.95); }
+        .btn-true { background-color: var(--success); }
+        .btn-false { background-color: var(--error); }
+
+        #feedback {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .btn-restart {
+            margin-top: 20px;
+            padding: 12px 25px;
+            background: #636e72;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .correct-anim { border-color: var(--success) !important; background-color: #f6fff7; }
+        .wrong-anim { border-color: var(--error) !important; background-color: #fff6f6; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card" id="quiz-container">
+    <div class="progress-header">
+        <span id="counter">Frage 1/5</span>
+        <span id="score">Punkte: 0</span>
+    </div>
+
+    <div class="phrase-box" id="phrase-display">Lade...</div>
+
+    <div class="choice-container">
+        <button class="btn btn-true" onclick="check(true)">Richtig ✅</button>
+        <button class="btn btn-false" onclick="check(false)">Falsch ❌</button>
+    </div>
+
+    <div id="feedback"></div>
+</div>
+
+<script>
+    const questions = [
+        { text: "прожужжать все уши", isCorrect: true, tip: "Korrekt! Das Original-Idiom." },
+        { text: "прожужжать все глаза", isCorrect: false, tip: "Falsch! Augen (глаза) kann man nicht vollsummen." },
+        { text: "прокричать все уши", isCorrect: false, tip: "Falsch! Das Verb muss 'summen' (жужжать) sein, nicht schreien." },
+        { text: "прожужжать все мозги", isCorrect: false, tip: "Falsch! Umgangssprachlich logisch, aber das Idiom nutzt 'Ohren'." },
+        { text: "Юля мне все уши прожужжала", isCorrect: true, tip: "Richtig! Die Wortfolge darf sich im Russischen ändern." }
+    ];
+
+    let current = 0;
+    let points = 0;
+
+    function displayQuestion() {
+        const q = questions[current];
+        document.getElementById('phrase-display').innerText = q.text;
+        document.getElementById('phrase-display').className = "phrase-box";
+        document.getElementById('counter').innerText = `Aufgabe ${current + 1}/${questions.length}`;
+        document.getElementById('feedback').style.display = 'none';
+        document.querySelectorAll('.btn').forEach(b => b.disabled = false);
+    }
+
+    function check(userChoice) {
+        const q = questions[current];
+        const feedback = document.getElementById('feedback');
+        const box = document.getElementById('phrase-display');
+        document.querySelectorAll('.btn').forEach(b => b.disabled = true);
+
+        feedback.style.display = 'block';
+
+        if (userChoice === q.isCorrect) {
+            points++;
+            box.classList.add('correct-anim');
+            feedback.style.backgroundColor = '#e8f5e9';
+            feedback.style.color = '#2e7d32';
+            feedback.innerHTML = `<b>Gut erkannt!</b> ${q.tip}`;
+            document.getElementById('score').innerText = `Punkte: ${points}`;
+        } else {
+            box.classList.add('wrong-anim');
+            feedback.style.backgroundColor = '#ffebee';
+            feedback.style.color = '#c62828';
+            feedback.innerHTML = `<b>Leider falsch.</b> ${q.tip}`;
+        }
+
+        setTimeout(() => {
+            current++;
+            if (current < questions.length) {
+                displayQuestion();
+            } else {
+                showResult();
+            }
+        }, 2500);
+    }
+
+    function showResult() {
+        const container = document.getElementById('quiz-container');
+        container.innerHTML = `
+            <h2>Training beendet! 🏆</h2>
+            <p style="font-size: 1.2rem;">Du hast <b>${points} von ${questions.length}</b> Punkten erreicht.</p>
+            <p style="color: #666;">Du erkennst das Idiom jetzt unter allen falschen Varianten!</p>
+            <button class="btn-restart" onclick="location.reload()">Neustart ↺</button>
+        `;
+    }
+
+    displayQuestion();
+</script>
+
+</body>
+</html>
