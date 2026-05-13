@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji-Storytelling: Die Ohren vollsummen</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --success: #4caf50;
+            --error: #f44336;
+            --bg: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        .quiz-card {
+            width: 100%;
+            max-width: 600px;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: #ddd;
+            border-radius: 50%;
+        }
+
+        .dot.active { background: var(--primary); }
+
+        .emoji-sequence {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 2.2rem;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            border: 2px solid #eee;
+        }
+
+        .options-list {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        .option-item:hover { border-color: var(--primary); background: #f0f7ff; }
+        .option-item.correct { background: #e8f5e9; border-color: var(--success); color: #2e7d32; }
+        .option-item.wrong { background: #ffebee; border-color: var(--error); color: #c62828; }
+
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .btn-next {
+            margin-top: 20px;
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-card" id="quiz-box">
+    <div class="progress-dots" id="dots"></div>
+    <p style="color: #666;">Welcher Satz passt zur Emoji-Geschichte?</p>
+
+    <div class="emoji-sequence" id="emoji-display"></div>
+
+    <div class="options-list" id="options-container"></div>
+
+    <div id="feedback"></div>
+    <button class="btn-next" id="next-btn" onclick="nextLevel()">Weiter ➔</button>
+</div>
+
+<script>
+    const levels = [
+        {
+            emojis: ["👩", "🗣️", "👜", "👂", "🤯"],
+            options: [
+                { text: "Юля все уши мне прожужжала об этой сумке.", correct: true },
+                { text: "Юля купила новую сумку.", correct: false },
+                { text: "Юля потеряла сумку.", correct: false }
+            ]
+        },
+        {
+            emojis: ["👧", "🗣️", "👦", "👭", "😴"],
+            options: [
+                { text: "Девушка познакомила подругу mit dem Jungen.", correct: false },
+                { text: "Она уже все уши прожужжала об этом парне.", correct: true },
+                { text: "Парень прожужжал уши девушке.", correct: false }
+            ]
+        },
+        {
+            emojis: ["👨", "🗣️", "🚗", "👂", "💢"],
+            options: [
+                { text: "Друг прожужжал мне все уши об этой машине.", correct: true },
+                { text: "Машина издает странный звук.", correct: false },
+                { text: "Я хочу купить эту машину.", correct: false }
+            ]
+        },
+        {
+            emojis: ["🐝", "👂", "🔄", "🗣️", "😫"],
+            options: [
+                { text: "Пчела укусила меня в ухо.", correct: false },
+                { text: "Жужжать - это звук пчелы.", correct: false },
+                { text: "Прожужжать уши значит много и часто говорить о чем-то.", correct: true }
+            ]
+        },
+        {
+            emojis: ["🏖️", "🗣️", "🗣️", "🗣️", "👂", "🤯"],
+            options: [
+                { text: "Я прожужжал всем уши о своем отпуске.", correct: true },
+                { text: "Я скоро поеду в отпуск.", correct: false },
+                { text: "В отпуске было очень шумно.", correct: false }
+            ]
+        }
+    ];
+
+    let currentLvl = 0;
+
+    function initQuiz() {
+        const dots = document.getElementById('dots');
+        dots.innerHTML = levels.map((_, i) => `<div class="dot ${i === currentLvl ? 'active' : ''}"></div>`).join('');
+        
+        const lvl = levels[currentLvl];
+        document.getElementById('emoji-display').innerHTML = lvl.emojis.map(e => `<span>${e}</span>`).join('');
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        lvl.options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'option-item';
+            div.innerText = opt.text;
+            div.onclick = () => checkAnswer(div, opt.correct);
+            container.appendChild(div);
+        });
+
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+    }
+
+    function checkAnswer(el, isCorrect) {
+        const feedback = document.getElementById('feedback');
+        const options = document.querySelectorAll('.option-item');
+        options.forEach(o => o.style.pointerEvents = 'none');
+
+        feedback.style.display = 'block';
+        if (isCorrect) {
+            el.classList.add('correct');
+            feedback.innerHTML = "✅ Richtig!";
+            feedback.style.color = "var(--success)";
+            document.getElementById('next-btn').style.display = 'block';
+        } else {
+            el.classList.add('wrong');
+            feedback.innerHTML = "❌ Versuch es noch einmal!";
+            feedback.style.color = "var(--error)";
+            setTimeout(() => {
+                el.classList.remove('wrong');
+                feedback.style.display = 'none';
+                options.forEach(o => o.style.pointerEvents = 'auto');
+            }, 1500);
+        }
+    }
+
+    function nextLevel() {
+        currentLvl++;
+        if (currentLvl < levels.length) {
+            initQuiz();
+        } else {
+            document.getElementById('quiz-box').innerHTML = `
+                <h2>🏆 Geschafft!</h2>
+                <p>Du kannst Emoji-Geschichten perfekt in russische Redewendungen übersetzen.</p>
+                <button class="btn-next" style="display:block" onclick="location.reload()">Alles auf Anfang ↺</button>
+            `;
+        }
+    }
+
+    initQuiz();
+</script>
+
+</body>
+</html>
